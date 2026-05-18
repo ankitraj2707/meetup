@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Commune — Find Your People, Find Your Event</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
   :root {
     --ink: #0e0d0b;
@@ -28,11 +30,11 @@
   }
 
   /* ─── NAV ─── */
-  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 3rem; background: rgba(245,240,232,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); }
+  nav { position: fixed; top: 0; left: 0; right: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 1rem 2rem; background: rgba(245,240,232,0.88); backdrop-filter: blur(12px); border-bottom: 1px solid var(--border); gap: 1rem; }
   .nav-logo { font-family: 'Bebas Neue', sans-serif; font-size: 2rem; letter-spacing: 0.04em; color: var(--ink); text-decoration: none; }
   .nav-logo span { color: var(--accent); }
-  .nav-links { display: flex; gap: 2rem; list-style: none; align-items: center; }
-  .nav-links a { text-decoration: none; color: var(--ink); font-size: 0.9rem; font-weight: 500; letter-spacing: 0.02em; transition: color 0.2s; }
+  .nav-links { display: flex; gap: 1.2rem; list-style: none; align-items: center; flex-wrap: nowrap; }
+  .nav-links a { text-decoration: none; color: var(--ink); font-size: 0.82rem; font-weight: 500; letter-spacing: 0.02em; transition: color 0.2s; white-space: nowrap; }
   .nav-links a:hover { color: var(--accent); }
   .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.65rem 1.5rem; border-radius: 2px; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; cursor: pointer; border: none; text-decoration: none; transition: all 0.2s; }
   .btn-primary { background: var(--accent); color: #fff; }
@@ -115,6 +117,7 @@
   .ev-bg-tournament { background: linear-gradient(135deg,#2a6b9c33,#e84d2b22); background-color: #e0e8f5; }
   .ev-bg-food_meetup { background: linear-gradient(135deg,#c9a84c33,#4a674122); background-color: #f5f0e0; }
   .ev-bg-hobby_meetup,.ev-bg-other { background: linear-gradient(135deg,#4a674122,#2a6b9c22); background-color: #e8edf5; }
+  .ev-bg-coding_competition { background: linear-gradient(135deg,#1a1a2e44,#6c63ff33); background-color: #e8e6f5; }
   .ev-main-emoji { font-size: 4rem; position: absolute; top: 50%; left: 50%; transform: translate(-50%,-55%); filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15)); }
   .ev-date-badge { position: relative; z-index: 2; background: rgba(245,240,232,0.95); padding: 0.3rem 0.7rem; border-radius: 2px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
   .event-card-body { padding: 1.2rem 1.4rem 1.4rem; }
@@ -213,14 +216,91 @@
   .footer-col ul li a:hover { color: var(--cream); }
   .footer-bottom { border-top: 1px solid rgba(245,240,232,0.1); padding-top: 2rem; display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; }
 
+  /* ─── CONTACT ─── */
+  /* ─── PAST EVENTS GALLERY ─── */
+  .gallery-section { padding: 5rem 3rem; background: var(--ink); color: var(--cream); }
+  .gallery-section .section-tag { color: var(--gold); }
+  .gallery-section .section-title { color: var(--cream); }
+  .gallery-grid { display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: auto auto; gap: 1rem; margin-top: 2.5rem; }
+  .gallery-item { position: relative; border-radius: 4px; overflow: hidden; cursor: pointer; group: true; }
+  .gallery-item:first-child { grid-column: span 2; grid-row: span 2; }
+  .gallery-item img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.4s ease; min-height: 200px; }
+  .gallery-item:first-child img { min-height: 440px; }
+  .gallery-item:hover img { transform: scale(1.04); }
+  .gallery-item-overlay { position: absolute; inset: 0; background: linear-gradient(to top, rgba(14,13,11,0.82) 0%, transparent 55%); opacity: 0; transition: opacity 0.3s; display: flex; flex-direction: column; justify-content: flex-end; padding: 1.4rem; }
+  .gallery-item:hover .gallery-item-overlay { opacity: 1; }
+  .gallery-item-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: #fff; margin-bottom: 0.3rem; }
+  .gallery-item-meta { font-size: 0.78rem; color: rgba(245,240,232,0.7); display: flex; align-items: center; gap: 0.5rem; }
+  .gallery-item-badge { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; padding: 0.2rem 0.6rem; border-radius: 2px; background: var(--accent); color: #fff; }
+  .gallery-lightbox { position: fixed; inset: 0; z-index: 700; background: rgba(14,13,11,0.95); display: flex; align-items: center; justify-content: center; padding: 2rem; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .gallery-lightbox.open { opacity: 1; pointer-events: all; }
+  .gallery-lightbox img { max-width: 90vw; max-height: 80vh; border-radius: 4px; object-fit: contain; }
+  .gallery-lightbox-caption { position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); text-align: center; color: rgba(245,240,232,0.85); font-size: 0.9rem; }
+  .gallery-lightbox-close { position: absolute; top: 1.5rem; right: 2rem; background: none; border: none; color: rgba(245,240,232,0.7); font-size: 2rem; cursor: pointer; transition: color 0.2s; }
+  .gallery-lightbox-close:hover { color: #fff; }
+  .gallery-lightbox-nav { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(245,240,232,0.1); border: none; color: #fff; font-size: 1.8rem; cursor: pointer; padding: 0.8rem 1rem; border-radius: 3px; transition: background 0.2s; }
+  .gallery-lightbox-nav:hover { background: rgba(245,240,232,0.2); }
+  .gallery-lightbox-prev { left: 1.5rem; }
+  .gallery-lightbox-next { right: 1.5rem; }
+
+  .contact-section { padding: 5rem 3rem; background: var(--warm); }
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: start; margin-top: 2.5rem; }
+  .contact-info { display: flex; flex-direction: column; gap: 1.5rem; }
+  .contact-info-item { display: flex; align-items: flex-start; gap: 1rem; }
+  .contact-info-icon { width: 44px; height: 44px; border-radius: 4px; background: var(--card-bg); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+  .contact-info-label { font-size: 0.72rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.2rem; }
+  .contact-info-value { font-size: 0.95rem; font-weight: 500; color: var(--ink); }
+  .contact-form-box { background: var(--ink); color: var(--cream); border-radius: 6px; padding: 2.5rem; }
+  .contact-form-box h3 { font-family: 'DM Serif Display', serif; font-size: 1.6rem; margin-bottom: 1.5rem; }
+  .contact-input { width: 100%; background: rgba(245,240,232,0.08); border: 1px solid rgba(245,240,232,0.15); border-radius: 3px; padding: 0.75rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--cream); outline: none; transition: border-color 0.2s; margin-bottom: 1rem; }
+  .contact-input:focus { border-color: var(--accent); }
+  .contact-input::placeholder { color: rgba(245,240,232,0.35); }
+  textarea.contact-input { resize: vertical; min-height: 110px; }
+
+  /* ─── MAP ─── */
+  #eventMap { height: 200px; border-radius: 4px; margin-bottom: 1.2rem; z-index: 1; border: 1px solid var(--border); }
+  .loc-row { display: flex; gap: 0.5rem; align-items: flex-end; }
+  .loc-row input { flex: 1; }
+  .loc-btn { white-space: nowrap; padding: 0.75rem 1rem; background: rgba(245,240,232,0.12); border: 1px solid rgba(245,240,232,0.2); border-radius: 3px; color: var(--cream); font-size: 0.8rem; font-family: 'DM Sans',sans-serif; cursor: pointer; display: flex; align-items: center; gap: 0.4rem; transition: background 0.2s; }
+  .loc-btn:hover { background: rgba(245,240,232,0.2); }
+  .loc-btn svg { flex-shrink: 0; }
+
+
+  /* ─── OTP MODAL ─── */
+  .otp-overlay { position: fixed; inset: 0; z-index: 700; background: rgba(14,13,11,0.8); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; padding: 2rem; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+  .otp-overlay.open { opacity: 1; pointer-events: all; }
+  .otp-box { background: var(--cream); border-radius: 8px; max-width: 400px; width: 100%; padding: 2.5rem; position: relative; text-align: center; }
+  .otp-box h2 { font-family: 'DM Serif Display', serif; font-size: 1.8rem; margin-bottom: 0.4rem; }
+  .otp-box p { color: var(--muted); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.5rem; }
+  .otp-box p strong { color: var(--ink); }
+  .otp-inputs { display: flex; gap: 0.6rem; justify-content: center; margin-bottom: 1.5rem; }
+  .otp-inputs input { width: 48px; height: 56px; text-align: center; font-size: 1.5rem; font-weight: 700; font-family: monospace; border: 2px solid var(--border); border-radius: 6px; background: #fff; color: var(--ink); outline: none; transition: border-color 0.2s; }
+  .otp-inputs input:focus { border-color: var(--accent); }
+  .otp-inputs input.filled { border-color: var(--ink); }
+  .otp-resend { font-size: 0.82rem; color: var(--muted); margin-top: 1rem; }
+  .otp-resend button { background: none; border: none; color: var(--accent); font-size: 0.82rem; cursor: pointer; font-weight: 600; padding: 0; }
+  .otp-resend button:disabled { color: var(--muted); cursor: default; }
+  .otp-email-icon { font-size: 3rem; margin-bottom: 1rem; display: block; }
+
   /* ─── TOAST ─── */
   .toast { position: fixed; bottom: 2rem; right: 2rem; z-index: 700; background: var(--ink); color: var(--cream); padding: 1rem 1.5rem; border-radius: 4px; font-size: 0.9rem; display: flex; align-items: center; gap: 0.7rem; transform: translateY(80px); opacity: 0; transition: all 0.35s cubic-bezier(0.34,1.56,0.64,1); box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
   .toast.show { transform: translateY(0); opacity: 1; }
 
-  /* ─── RESPONSIVE ─── */
+  /* hamburger */
+  .hamburger { display: none; flex-direction: column; gap: 5px; cursor: pointer; background: none; border: none; padding: 4px; }
+  .hamburger span { display: block; width: 24px; height: 2px; background: var(--ink); border-radius: 2px; transition: all 0.3s; }
+  .hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+  .hamburger.open span:nth-child(2) { opacity: 0; }
+  .hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
   @media (max-width: 900px) {
-    nav { padding: 1rem 1.5rem; }
-    .nav-links { display: none; }
+    nav { padding: 1rem 1.5rem; flex-wrap: wrap; }
+    .hamburger { display: flex; }
+    .nav-links { display: none; flex-direction: column; width: 100%; align-items: flex-start; gap: 0; border-top: 1px solid var(--border); margin-top: 0.75rem; padding: 0.5rem 0 0; }
+    .nav-links.open { display: flex; }
+    .nav-links li { width: 100%; }
+    .nav-links > li > a { display: block; padding: 0.75rem 0; border-bottom: 1px solid var(--border); width: 100%; font-size: 1rem; }
+    #authNav { flex-wrap: wrap; gap: 0.5rem; padding: 0.75rem 0 0.25rem; border-bottom: 1px solid var(--border); width: 100%; }
     .hero { grid-template-columns: 1fr; padding: 6rem 1.5rem 3rem; }
     .hero-visual { padding-left: 0; margin-top: 2rem; }
     .search-section { padding: 2rem 1.5rem; }
@@ -231,9 +311,14 @@
     .steps-grid { grid-template-columns: 1fr 1fr; }
     .org-cards { grid-template-columns: 1fr; }
     .cta-section { grid-template-columns: 1fr; padding: 3rem 1.5rem; }
+    .contact-grid { grid-template-columns: 1fr; }
     .footer-grid { grid-template-columns: 1fr 1fr; }
     .how-section { padding: 3rem 1.5rem; }
     .organizers-section { padding: 3rem 1.5rem; }
+    .gallery-section { padding: 3rem 1.5rem; }
+    .gallery-grid { grid-template-columns: 1fr 1fr; }
+    .gallery-item:first-child { grid-column: span 2; grid-row: span 1; }
+    .gallery-item:first-child img { min-height: 240px; }
   }
 </style>
 </head>
@@ -242,10 +327,15 @@
 <!-- NAV -->
 <nav>
   <a href="#" class="nav-logo">Com<span>.</span>mune</a>
-  <ul class="nav-links">
+  <button class="hamburger" id="hamburgerBtn" onclick="toggleMenu()" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+  <ul class="nav-links" id="navLinks">
     <li><a href="#discover">Discover</a></li>
     <li><a href="#how">How it Works</a></li>
+    <li><a href="#gallery">Gallery</a></li>
     <li><a href="#create">Organize</a></li>
+    <li><a href="#contact">Contact</a></li>
     <li id="authNav">
       <span id="userGreeting">Hi, <span id="userName"></span></span>
       <a href="#" class="btn btn-outline" style="padding:0.5rem 1.2rem" id="signInBtn" onclick="openAuth('login')">Sign In</a>
@@ -316,6 +406,7 @@
     <a class="category-card" onclick="filterCategory('literary_festival',this);return false;"><span class="cat-emoji">✍️</span><div class="cat-name">Literary Fests</div></a>
     <a class="category-card" onclick="filterCategory('group_trip',this);return false;"><span class="cat-emoji">🏕️</span><div class="cat-name">Group Trips</div></a>
     <a class="category-card" onclick="filterCategory('food_meetup',this);return false;"><span class="cat-emoji">🍜</span><div class="cat-name">Food Meetups</div></a>
+    <a class="category-card" onclick="filterCategory('coding_competition',this);return false;"><span class="cat-emoji">💻</span><div class="cat-name">Coding Competitions</div></a>
   </div>
 </section>
 
@@ -385,12 +476,22 @@
           <option value="group_trip">Group Trip</option>
           <option value="food_meetup">Food Meetup</option>
           <option value="hobby_meetup">Hobby Meetup</option>
+          <option value="coding_competition">Coding Competition</option>
           <option value="other">Other</option>
         </select>
       </div>
       <div class="form-group"><label>Date</label><input type="date" id="evDate"></div>
     </div>
-    <div class="form-group"><label>Location</label><input type="text" id="evLoc" placeholder="Venue or address"></div>
+    <div class="form-group">
+      <label>Location</label>
+      <div class="loc-row">
+        <input type="text" id="evLoc" placeholder="Venue or address" oninput="debounceGeocode()">
+        <button type="button" class="loc-btn" onclick="useMyLocation()" title="Detect my location">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="9" stroke-dasharray="2 3"/></svg>
+          Use my location
+        </button>
+      </div>
+    </div>
     <div class="form-row">
       <div class="form-group"><label>Max Participants</label><input type="number" id="evMax" placeholder="50" min="1"></div>
       <div class="form-group"><label>Entry Fee (₹)</label><input type="number" id="evFee" placeholder="0" min="0" step="0.01"></div>
@@ -401,16 +502,153 @@
   </div>
 </section>
 
+<!-- PAST EVENTS GALLERY -->
+<section class="gallery-section" id="gallery">
+  <div class="section-header">
+    <div>
+      <div class="section-tag">Memories &amp; Highlights</div>
+      <h2 class="section-title">Events from the past year</h2>
+    </div>
+    <a href="#discover" class="btn btn-outline" style="color:rgba(245,240,232,0.7);border-color:rgba(245,240,232,0.3);">Browse upcoming →</a>
+  </div>
+
+  <div class="gallery-grid" id="galleryGrid">
+    <!-- Featured (large) -->
+    <div class="gallery-item" onclick="openLightbox(0)">
+      <img src="https://images.unsplash.com/photo-1608889175123-8ee362201f81?w=900&auto=format&fit=crop" alt="Mumbai Dawn Marathon 2025" loading="lazy">
+      <div class="gallery-item-overlay">
+        <span class="gallery-item-badge">Marathon</span>
+        <div class="gallery-item-title">Mumbai Dawn Marathon 2025</div>
+        <div class="gallery-item-meta">🗓 April 2025 &nbsp;·&nbsp; 📍 Marine Drive, Mumbai</div>
+      </div>
+    </div>
+    <!-- Small tile 1 -->
+    <div class="gallery-item" onclick="openLightbox(1)">
+      <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=600&auto=format&fit=crop" alt="Koramangala Street Jam 2025" loading="lazy">
+      <div class="gallery-item-overlay">
+        <span class="gallery-item-badge">Street Jam</span>
+        <div class="gallery-item-title">Koramangala Street Jam 2025</div>
+        <div class="gallery-item-meta">🗓 March 2025 &nbsp;·&nbsp; 📍 Bengaluru</div>
+      </div>
+    </div>
+    <!-- Small tile 2 -->
+    <div class="gallery-item" onclick="openLightbox(2)">
+      <img src="https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=600&auto=format&fit=crop" alt="HackHorizon Coding Competition 2025" loading="lazy">
+      <div class="gallery-item-overlay">
+        <span class="gallery-item-badge">Coding Competition</span>
+        <div class="gallery-item-title">HackHorizon 2025</div>
+        <div class="gallery-item-meta">🗓 February 2025 &nbsp;·&nbsp; 📍 Jamshedpur</div>
+      </div>
+    </div>
+    <!-- Row 2 tile 1 -->
+    <div class="gallery-item" onclick="openLightbox(3)">
+      <img src="https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&auto=format&fit=crop" alt="South Indian Street Food Crawl 2025" loading="lazy">
+      <div class="gallery-item-overlay">
+        <span class="gallery-item-badge">Food Meetup</span>
+        <div class="gallery-item-title">Street Food Crawl 2025</div>
+        <div class="gallery-item-meta">🗓 January 2025 &nbsp;·&nbsp; 📍 Matunga, Mumbai</div>
+      </div>
+    </div>
+    <!-- Row 2 tile 2 -->
+    <div class="gallery-item" onclick="openLightbox(4)">
+      <img src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=600&auto=format&fit=crop" alt="Midnight Book Club — Dostoevsky Night" loading="lazy">
+      <div class="gallery-item-overlay">
+        <span class="gallery-item-badge">Book Club</span>
+        <div class="gallery-item-title">Midnight Book Club — Dostoevsky Night</div>
+        <div class="gallery-item-meta">🗓 December 2024 &nbsp;·&nbsp; 📍 Atta Galatta, Bengaluru</div>
+      </div>
+    </div>
+    <!-- Row 2 tile 3 -->
+    <div class="gallery-item" onclick="openLightbox(5)">
+      <img src="https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=600&auto=format&fit=crop" alt="Coorg Group Trek 2024" loading="lazy">
+      <div class="gallery-item-overlay">
+        <span class="gallery-item-badge">Group Trip</span>
+        <div class="gallery-item-title">Coorg Group Trek 2024</div>
+        <div class="gallery-item-meta">🗓 November 2024 &nbsp;·&nbsp; 📍 Abbey Falls, Coorg</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY LIGHTBOX -->
+<div class="gallery-lightbox" id="galleryLightbox" onclick="closeLightboxOnBg(event)">
+  <button class="gallery-lightbox-close" onclick="closeLightbox()">✕</button>
+  <button class="gallery-lightbox-nav gallery-lightbox-prev" onclick="shiftLightbox(-1)">‹</button>
+  <div style="display:flex;flex-direction:column;align-items:center;gap:1rem;">
+    <img id="lightboxImg" src="" alt="">
+    <div class="gallery-lightbox-caption" id="lightboxCaption"></div>
+  </div>
+  <button class="gallery-lightbox-nav gallery-lightbox-next" onclick="shiftLightbox(1)">›</button>
+</div>
+
+<!-- CONTACT -->
+<section class="contact-section" id="contact">
+  <div class="section-header">
+    <div><div class="section-tag">Get In Touch</div><h2 class="section-title">We'd love to hear from you.</h2></div>
+  </div>
+  <div class="contact-grid">
+    <div class="contact-info">
+      <p style="color:var(--muted);line-height:1.7;max-width:400px">Have a question, partnership idea, or just want to say hello? Drop us a message and we'll get back to you within 24 hours.</p>
+      <div class="contact-info-item">
+        <div class="contact-info-icon">📧</div>
+        <div><div class="contact-info-label">Email</div><div class="contact-info-value">hello@commune.community</div></div>
+      </div>
+      <div class="contact-info-item">
+        <div class="contact-info-icon">📍</div>
+        <div><div class="contact-info-label">Based In</div><div class="contact-info-value">Jamshedpur, Jharkhand, India</div></div>
+      </div>
+      <div class="contact-info-item">
+        <div class="contact-info-icon">🕐</div>
+        <div><div class="contact-info-label">Response Time</div><div class="contact-info-value">Within 24 hours on weekdays</div></div>
+      </div>
+    </div>
+    <div class="contact-form-box">
+      <h3>Send a message</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <input class="contact-input" type="text" id="contactName" placeholder="Your name">
+        <input class="contact-input" type="email" id="contactEmail" placeholder="Email address">
+      </div>
+      <input class="contact-input" type="text" id="contactSubject" placeholder="Subject">
+      <textarea class="contact-input" id="contactMsg" placeholder="Your message…"></textarea>
+      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:1rem" onclick="submitContact()">Send Message →</button>
+      <p id="contactNote" style="font-size:0.78rem;color:rgba(245,240,232,0.5);margin-top:0.75rem;text-align:center"></p>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <div class="footer-grid">
     <div><div class="footer-brand">Com<span>.</span>mune</div><p class="footer-tagline">The community events platform built for real people and real places.</p></div>
     <div class="footer-col"><h4>Discover</h4><ul><li><a href="#discover">Browse Events</a></li><li><a href="#" onclick="filterCategory('marathon',document.querySelector('.category-card:nth-child(2)'));return false;">Marathons</a></li><li><a href="#" onclick="filterCategory('street_jam',document.querySelector('.category-card:nth-child(3)'));return false;">Street Jams</a></li><li><a href="#" onclick="filterCategory('group_trip',document.querySelector('.category-card:nth-child(7)'));return false;">Group Trips</a></li></ul></div>
     <div class="footer-col"><h4>Organize</h4><ul><li><a href="#create">Create Event</a></li><li><a href="#how">How It Works</a></li></ul></div>
-    <div class="footer-col"><h4>Account</h4><ul><li><a href="#" onclick="openAuth('login');return false;">Sign In</a></li><li><a href="#" onclick="openAuth('register');return false;">Register</a></li></ul></div>
+    <div class="footer-col"><h4>Account</h4><ul><li><a href="#" onclick="openAuth('login');return false;">Sign In</a></li><li><a href="#" onclick="openAuth('register');return false;">Register</a></li><li><a href="#contact">Contact Us</a></li></ul></div>
   </div>
   <div class="footer-bottom"><span>© 2026 Commune Technologies. All rights reserved.</span><span style="color:rgba(245,240,232,0.4)">Made with ♥ for communities</span></div>
 </footer>
+
+
+<!-- OTP VERIFICATION MODAL -->
+<div class="otp-overlay" id="otpOverlay">
+  <div class="otp-box">
+    <span class="otp-email-icon">📬</span>
+    <h2>Verify your email</h2>
+    <p>We sent a 6-digit code to <strong id="otpEmailDisplay"></strong>.<br>Enter it below to activate your account.</p>
+    <div class="otp-inputs" id="otpInputs">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" id="otp0" oninput="otpInput(0)" onkeydown="otpKeydown(event,0)">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" id="otp1" oninput="otpInput(1)" onkeydown="otpKeydown(event,1)">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" id="otp2" oninput="otpInput(2)" onkeydown="otpKeydown(event,2)">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" id="otp3" oninput="otpInput(3)" onkeydown="otpKeydown(event,3)">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" id="otp4" oninput="otpInput(4)" onkeydown="otpKeydown(event,4)">
+      <input type="text" maxlength="1" inputmode="numeric" pattern="[0-9]" id="otp5" oninput="otpInput(5)" onkeydown="otpKeydown(event,5)">
+    </div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:1rem" id="otpVerifyBtn" onclick="verifyOtp()">Verify & Continue →</button>
+    <div class="otp-resend">
+      Didn't get it? <button id="resendBtn" onclick="resendOtp()">Resend code</button>
+      <span id="resendTimer"></span>
+    </div>
+  </div>
+</div>
 
 <!-- EVENT DETAIL MODAL -->
 <div class="modal-overlay" id="modalOverlay" onclick="handleModalBgClick(event)">
@@ -428,6 +666,7 @@
       <div class="ev-meta-row"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Entry: <strong id="m-fee"></strong></div>
     </div>
     <p id="m-desc" style="font-size:0.95rem;line-height:1.7;color:var(--muted);margin-bottom:1.5rem"></p>
+    <div id="eventMap"></div>
     <div style="display:flex;align-items:center;gap:0.7rem;padding:1rem;background:var(--warm);border-radius:3px;margin-bottom:1.5rem">
       <div class="organizer-avatar" id="m-org-av" style="width:36px;height:36px;font-size:1.1rem"></div>
       <div><div style="font-size:0.72rem;color:var(--muted);font-weight:700;letter-spacing:0.06em;text-transform:uppercase">Organizer</div><div id="m-org" style="font-weight:600"></div></div>
@@ -435,6 +674,7 @@
     <div style="display:flex;gap:1rem">
       <button class="btn btn-primary" id="rsvpBtn" style="flex:1;justify-content:center" onclick="rsvp()">RSVP — <span id="m-spots"></span></button>
       <button class="btn btn-outline" onclick="shareEvent()">Share</button>
+      <button class="btn" id="deleteEventBtn" style="display:none;background:#fde8e3;color:var(--accent);border:1.5px solid var(--accent)" onclick="deleteEvent()">🗑 Delete</button>
     </div>
   </div>
 </div>
@@ -529,6 +769,10 @@ async function apiFetch(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
   if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
   const res = await fetch(API + path, { ...opts, headers });
+  const contentType = res.headers.get('content-type') || '';
+  if (!contentType.includes('application/json')) {
+    throw new Error(`API error ${res.status}: server returned HTML instead of JSON. Check that your API route exists and the server is running correctly.`);
+  }
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || 'Request failed');
   return data;
@@ -540,7 +784,7 @@ async function apiFetch(path, opts = {}) {
 const CATEGORY_EMOJI = {
   marathon: '🏃', street_jam: '🎸', tournament: '🏆',
   book_club: '📚', literary_festival: '✍️', group_trip: '🏕️',
-  food_meetup: '🍜', hobby_meetup: '🎨', other: '📅'
+  food_meetup: '🍜', hobby_meetup: '🎨', coding_competition: '💻', other: '📅'
 };
 
 let currentCategory = '';
@@ -636,7 +880,6 @@ function setTimeFilter(type, el) {
   document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
   currentTimeFilter = type;
-  // Re-render visible cards based on filter
   if (type === 'free') {
     document.querySelectorAll('.event-card').forEach(c => {
       const feeEl = c.querySelector('.ev-meta-row:last-child');
@@ -684,13 +927,13 @@ document.getElementById('searchLoc').addEventListener('keydown', e => e.key === 
 //  EVENT DETAIL MODAL
 // ══════════════════════════════════════════════════════════
 let currentEventId = null;
+let currentEventOrganizerId = null;
 
 async function openModal(eventId) {
   currentEventId = eventId;
   document.getElementById('modalOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
 
-  // Set loading state
   document.getElementById('m-title').textContent = 'Loading…';
   document.getElementById('m-type').textContent = '';
   document.getElementById('m-date').textContent = '';
@@ -708,6 +951,7 @@ async function openModal(eventId) {
     const catLabel = ev.category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
     const spotsText = ev.is_full ? 'Event Full' : `${ev.spots_remaining} spots left`;
 
+    currentEventOrganizerId = ev.organizer_id;
     document.getElementById('m-title').textContent = ev.title;
     document.getElementById('m-type').textContent = catLabel;
     document.getElementById('m-date').textContent = dateStr;
@@ -718,6 +962,15 @@ async function openModal(eventId) {
     document.getElementById('m-org-av').textContent = ev.organizer_avatar || ev.organizer_name[0];
     document.getElementById('m-spots').textContent = spotsText;
     document.getElementById('rsvpBtn').disabled = ev.is_full;
+
+    // Show delete button only for the event's organizer (or admin)
+    const isOwner = currentUser && (currentUser.id === ev.organizer_id || currentUser.role === 'admin');
+    const deleteBtn = document.getElementById('deleteEventBtn');
+    deleteBtn.style.display = isOwner ? 'inline-flex' : 'none';
+    // Hide RSVP for organizer of their own event
+    document.getElementById('rsvpBtn').style.display = isOwner ? 'none' : '';
+
+    geocodeAndShowMap(ev.location);
   } catch (err) {
     document.getElementById('m-title').textContent = 'Could not load event';
   }
@@ -742,7 +995,7 @@ async function rsvp() {
     const res = await apiFetch(`/api/rsvps/${currentEventId}`, { method: 'POST' });
     closeModal();
     showToast('🎉', res.message);
-    loadEvents(currentCategory); // refresh counts
+    loadEvents(currentCategory);
   } catch (err) {
     showToast('⚠️', err.message);
   }
@@ -751,6 +1004,26 @@ async function rsvp() {
 function shareEvent() {
   const url = `${window.location.origin}/#event-${currentEventId}`;
   navigator.clipboard?.writeText(url).then(() => showToast('🔗', 'Event link copied!'));
+}
+
+async function deleteEvent() {
+  const title = document.getElementById('m-title').textContent;
+  if (!confirm(`Delete "${title}"?\n\nThis will remove the event and all RSVPs permanently. This cannot be undone.`)) return;
+
+  const btn = document.getElementById('deleteEventBtn');
+  btn.disabled = true;
+  btn.textContent = 'Deleting…';
+
+  try {
+    await apiFetch(`/api/events/${currentEventId}`, { method: 'DELETE' });
+    closeModal();
+    showToast('🗑️', 'Event deleted successfully');
+    loadEvents(currentCategory);
+  } catch (err) {
+    showToast('⚠️', err.message);
+    btn.disabled = false;
+    btn.innerHTML = '🗑 Delete';
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -789,7 +1062,7 @@ async function submitEvent() {
     ['evName','evDate','evLoc','evMax','evFee','evDesc'].forEach(id => {
       const el = document.getElementById(id); if (el) el.value = '';
     });
-    loadEvents(); // refresh grid
+    loadEvents();
   } catch (err) {
     showToast('⚠️', err.message);
   }
@@ -831,9 +1104,15 @@ async function doLogin() {
       method: 'POST',
       body: JSON.stringify({ email, password })
     });
-    saveAuth(res.token, res.user);
-    closeAuth();
-    showToast('✓', `Welcome back, ${res.user.name.split(' ')[0]}!`);
+    if (res.needsVerification) {
+      closeAuth();
+      openOtpModal(email);
+      showToast('📬', 'Please verify your email first. OTP sent!');
+    } else {
+      saveAuth(res.token, res.user);
+      closeAuth();
+      showToast('✓', `Welcome back, ${res.user.name.split(' ')[0]}!`);
+    }
   } catch (err) {
     showToast('⚠️', err.message);
   }
@@ -850,9 +1129,15 @@ async function doRegister() {
       method: 'POST',
       body: JSON.stringify({ name, email, password, role })
     });
-    saveAuth(res.token, res.user);
-    closeAuth();
-    showToast('🎉', `Welcome to Commune, ${res.user.name.split(' ')[0]}!`);
+    if (res.needsVerification) {
+      closeAuth();
+      openOtpModal(email);
+      showToast('📬', 'Check your email for a verification code!');
+    } else {
+      saveAuth(res.token, res.user);
+      closeAuth();
+      showToast('🎉', 'Welcome to Commune!');
+    }
   } catch (err) {
     showToast('⚠️', err.message);
   }
@@ -872,10 +1157,261 @@ function showToast(icon, msg) {
 }
 
 // ══════════════════════════════════════════════════════════
-//  INIT
+//  CONTACT
+// ══════════════════════════════════════════════════════════
+function submitContact() {
+  const name    = document.getElementById('contactName').value.trim();
+  const email   = document.getElementById('contactEmail').value.trim();
+  const subject = document.getElementById('contactSubject').value.trim();
+  const msg     = document.getElementById('contactMsg').value.trim();
+  const note    = document.getElementById('contactNote');
+
+  if (!name || !email || !msg) {
+    showToast('⚠️', 'Please fill in name, email, and message');
+    return;
+  }
+  const emailRx = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRx.test(email)) {
+    showToast('⚠️', 'Please enter a valid email address');
+    return;
+  }
+
+  note.textContent = 'Sending…';
+  setTimeout(() => {
+    ['contactName','contactEmail','contactSubject','contactMsg'].forEach(id => {
+      document.getElementById(id).value = '';
+    });
+    note.textContent = '';
+    showToast('✉️', "Message sent! We'll be in touch soon.");
+  }, 800);
+}
+
+// ══════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════
+//  LEAFLET MAP — OpenStreetMap + Nominatim
+// ══════════════════════════════════════════════════════════
+let modalMap = null;
+let geocodeTimer = null;
+
+async function reverseGeocode(lat, lng) {
+  try {
+    const res = await fetch('https://nominatim.openstreetmap.org/reverse?lat='+lat+'&lon='+lng+'&format=json', { headers: {'Accept-Language':'en'} });
+    const d = await res.json();
+    return d.display_name || (lat.toFixed(5)+', '+lng.toFixed(5));
+  } catch(e) { return lat.toFixed(5)+', '+lng.toFixed(5); }
+}
+
+async function forwardGeocode(query) {
+  try {
+    const res = await fetch('https://nominatim.openstreetmap.org/search?q='+encodeURIComponent(query)+'&format=json&limit=1', { headers: {'Accept-Language':'en'} });
+    const d = await res.json();
+    if (d.length) return { lat: parseFloat(d[0].lat), lng: parseFloat(d[0].lon) };
+  } catch(e) {}
+  return null;
+}
+
+function initModalMap(lat, lng, label) {
+  setTimeout(function() {
+    if (modalMap) { modalMap.remove(); modalMap = null; }
+    modalMap = L.map('eventMap').setView([lat, lng], 15);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 19
+    }).addTo(modalMap);
+    L.marker([lat, lng]).addTo(modalMap).bindPopup(label).openPopup();
+    setTimeout(function() { modalMap.invalidateSize(); }, 200);
+  }, 120);
+}
+
+async function geocodeAndShowMap(locationText) {
+  var mapEl = document.getElementById('eventMap');
+  if (!locationText) { mapEl.style.display = 'none'; return; }
+  mapEl.style.display = 'block';
+  var coords = await forwardGeocode(locationText);
+  if (coords) initModalMap(coords.lat, coords.lng, locationText);
+  else mapEl.style.display = 'none';
+}
+
+function useMyLocation() {
+  if (!navigator.geolocation) { showToast('⚠️', 'Geolocation not supported'); return; }
+  showToast('📍', 'Detecting your location…');
+  navigator.geolocation.getCurrentPosition(
+    async function(pos) {
+      var name = await reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+      document.getElementById('evLoc').value = name;
+      showToast('✓', 'Location detected!');
+    },
+    function() { showToast('⚠️', 'Could not get location. Please allow access.'); },
+    { enableHighAccuracy: true, timeout: 8000 }
+  );
+}
+
+function debounceGeocode() {
+  clearTimeout(geocodeTimer);
+  geocodeTimer = setTimeout(function(){}, 600);
+}
+
+
+// ══════════════════════════════════════════════════════════
+//  OTP VERIFICATION
+// ══════════════════════════════════════════════════════════
+let pendingOtpEmail = '';
+let resendCountdown = null;
+
+function openOtpModal(email) {
+  pendingOtpEmail = email;
+  document.getElementById('otpEmailDisplay').textContent = email;
+  // Clear inputs
+  for (let i = 0; i < 6; i++) {
+    const el = document.getElementById('otp' + i);
+    el.value = '';
+    el.classList.remove('filled');
+  }
+  document.getElementById('otpOverlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('otp0').focus(), 100);
+  startResendTimer(60);
+}
+
+function closeOtpModal() {
+  document.getElementById('otpOverlay').classList.remove('open');
+  document.body.style.overflow = '';
+  clearInterval(resendCountdown);
+}
+
+function otpInput(index) {
+  const el = document.getElementById('otp' + index);
+  // Allow only digits
+  el.value = el.value.replace(/[^0-9]/g, '');
+  if (el.value) {
+    el.classList.add('filled');
+    if (index < 5) document.getElementById('otp' + (index + 1)).focus();
+    else verifyOtp(); // auto-submit on last digit
+  } else {
+    el.classList.remove('filled');
+  }
+}
+
+function otpKeydown(e, index) {
+  if (e.key === 'Backspace' && !document.getElementById('otp' + index).value && index > 0) {
+    document.getElementById('otp' + (index - 1)).focus();
+  }
+}
+
+function getOtpValue() {
+  return Array.from({ length: 6 }, (_, i) => document.getElementById('otp' + i).value).join('');
+}
+
+async function verifyOtp() {
+  const otp = getOtpValue();
+  if (otp.length < 6) { showToast('⚠️', 'Please enter all 6 digits'); return; }
+
+  const btn = document.getElementById('otpVerifyBtn');
+  btn.textContent = 'Verifying…';
+  btn.disabled = true;
+
+  try {
+    const res = await apiFetch('/api/users/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email: pendingOtpEmail, otp })
+    });
+    saveAuth(res.token, res.user);
+    closeOtpModal();
+    closeAuth();
+    showToast('🎉', res.message || 'Email verified! Welcome to Commune!');
+  } catch (err) {
+    showToast('⚠️', err.message);
+    // Shake inputs and clear
+    const inputs = document.getElementById('otpInputs');
+    inputs.style.animation = 'none';
+    inputs.offsetHeight;
+    for (let i = 0; i < 6; i++) {
+      document.getElementById('otp' + i).value = '';
+      document.getElementById('otp' + i).classList.remove('filled');
+    }
+    document.getElementById('otp0').focus();
+  } finally {
+    btn.textContent = 'Verify & Continue →';
+    btn.disabled = false;
+  }
+}
+
+async function resendOtp() {
+  try {
+    const res = await apiFetch('/api/users/resend-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email: pendingOtpEmail })
+    });
+    showToast('📬', 'New OTP sent! Check your inbox.');
+    startResendTimer(60);
+  } catch (err) {
+    showToast('⚠️', err.message);
+  }
+}
+
+function startResendTimer(seconds) {
+  const btn = document.getElementById('resendBtn');
+  const timer = document.getElementById('resendTimer');
+  btn.disabled = true;
+  clearInterval(resendCountdown);
+  let remaining = seconds;
+  timer.textContent = ' (' + remaining + 's)';
+  resendCountdown = setInterval(() => {
+    remaining--;
+    timer.textContent = ' (' + remaining + 's)';
+    if (remaining <= 0) {
+      clearInterval(resendCountdown);
+      btn.disabled = false;
+      timer.textContent = '';
+    }
+  }, 1000);
+}
+
+
+
+// ─── GALLERY LIGHTBOX ─────────────────────────────────────────
+const GALLERY_DATA = [
+  { src: 'https://images.unsplash.com/photo-1608889175123-8ee362201f81?w=1200&auto=format&fit=crop', caption: 'Mumbai Dawn Marathon 2025 · Marine Drive, Mumbai' },
+  { src: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&auto=format&fit=crop', caption: 'Koramangala Street Jam 2025 · Bengaluru' },
+  { src: 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d?w=1200&auto=format&fit=crop', caption: 'HackHorizon Coding Competition 2025 · Jamshedpur' },
+  { src: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=1200&auto=format&fit=crop', caption: 'South Indian Street Food Crawl 2025 · Matunga, Mumbai' },
+  { src: 'https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=1200&auto=format&fit=crop', caption: 'Midnight Book Club — Dostoevsky Night · Atta Galatta, Bengaluru' },
+  { src: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=1200&auto=format&fit=crop', caption: 'Coorg Group Trek 2024 · Abbey Falls Trailhead' },
+];
+let lightboxIndex = 0;
+
+function openLightbox(index) {
+  lightboxIndex = index;
+  const lb = document.getElementById('galleryLightbox');
+  document.getElementById('lightboxImg').src = GALLERY_DATA[index].src;
+  document.getElementById('lightboxCaption').textContent = GALLERY_DATA[index].caption;
+  lb.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeLightbox() {
+  document.getElementById('galleryLightbox').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function closeLightboxOnBg(e) {
+  if (e.target === document.getElementById('galleryLightbox')) closeLightbox();
+}
+function shiftLightbox(dir) {
+  lightboxIndex = (lightboxIndex + dir + GALLERY_DATA.length) % GALLERY_DATA.length;
+  document.getElementById('lightboxImg').src = GALLERY_DATA[lightboxIndex].src;
+  document.getElementById('lightboxCaption').textContent = GALLERY_DATA[lightboxIndex].caption;
+}
+document.addEventListener('keydown', e => {
+  const lb = document.getElementById('galleryLightbox');
+  if (!lb.classList.contains('open')) return;
+  if (e.key === 'ArrowRight') shiftLightbox(1);
+  if (e.key === 'ArrowLeft') shiftLightbox(-1);
+  if (e.key === 'Escape') closeLightbox();
+});
+
+//  INIT  ← THIS WAS THE MISSING PIECE
 // ══════════════════════════════════════════════════════════
 renderAuthNav();
 loadEvents();
 </script>
 </body>
-</html>
+</html> 
