@@ -96,7 +96,6 @@ router.put('/:id', authenticate, authorizeOrganizer, validateEvent, async (req, 
   try {
     const { title, category, event_date, location, max_participants, entry_fee, description, status } = req.body;
 
-    // Only the event's own organizer (or admin) can update
     const [check] = await db.query('SELECT organizer_id FROM events WHERE id = ?', [req.params.id]);
     if (!check.length) return res.status(404).json({ error: 'Event not found' });
     if (check[0].organizer_id !== req.user.id && req.user.role !== 'admin') {

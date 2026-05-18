@@ -3,15 +3,14 @@ const router = express.Router();
 const db = require('../config/db');
 const { authenticate } = require('../middleware/auth');
 
-// ─── POST /api/rsvps/:eventId ─ RSVP to an event ────────────
+// ─── POST /api/rsvps/:eventId ─ RSVP to a FREE event ────────
 router.post('/:eventId', authenticate, async (req, res, next) => {
   try {
     const eventId = Number(req.params.eventId);
     const userId = req.user.id;
 
-    // Fetch event with current RSVP count
     const [events] = await db.query(`
-      SELECT e.id, e.title, e.max_participants, e.status, COUNT(r.id) AS rsvp_count
+      SELECT e.id, e.title, e.max_participants, e.status, e.entry_fee, COUNT(r.id) AS rsvp_count
       FROM events e
       LEFT JOIN rsvps r ON r.event_id = e.id
       WHERE e.id = ?
@@ -21,14 +20,22 @@ router.post('/:eventId', authenticate, async (req, res, next) => {
     if (!events.length) return res.status(404).json({ error: 'Event not found' });
 
     const event = events[0];
+
     if (event.status !== 'upcoming') {
       return res.status(400).json({ error: 'Cannot RSVP to a non-upcoming event' });
     }
+
+    // ── Block RSVP for paid events — must go through /api/payments ──
+    if (parseFloat(event.entry_fee) > 0) {
+      return res.status(400).json({
+        error: `This event has an entry fee of ₹${parseFloat(event.entry_fee).toFixed(2)}. Please complete payment at /api/payments/create-order to register.`,
+      });
+    }
+
     if (event.rsvp_count >= event.max_participants) {
       return res.status(400).json({ error: 'Event is full' });
     }
 
-    // Check duplicate
     const [existing] = await db.query(
       'SELECT id FROM rsvps WHERE event_id = ? AND user_id = ?',
       [eventId, userId]
@@ -72,7 +79,6 @@ router.get('/:eventId', authenticate, async (req, res, next) => {
   try {
     const eventId = req.params.eventId;
 
-    // Check the requester is the organizer or admin
     const [events] = await db.query('SELECT organizer_id FROM events WHERE id = ?', [eventId]);
     if (!events.length) return res.status(404).json({ error: 'Event not found' });
     if (events[0].organizer_id !== req.user.id && req.user.role !== 'admin') {

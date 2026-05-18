@@ -18,12 +18,10 @@ router.post('/register', async (req, res, next) => {
       return res.status(400).json({ error: 'name, email, and password are required' });
     }
 
-    // Check duplicate email
     const [existing] = await db.query('SELECT id FROM users WHERE email = ?', [email]);
     if (existing.length) return res.status(409).json({ error: 'Email already registered' });
 
     const password_hash = await bcrypt.hash(password, SALT_ROUNDS);
-
     const safeRole = ['user', 'organizer'].includes(role) ? role : 'user';
 
     const [result] = await db.query(
