@@ -6,13 +6,14 @@ const path = require('path');
 require('dotenv').config();
 
 const db = require('./config/db');
-const eventRoutes = require('./routes/events');
-const userRoutes = require('./routes/users');
-const rsvpRoutes = require('./routes/rsvps');
-const searchRoutes = require('./routes/search');
+const eventRoutes   = require('./routes/events');
+const userRoutes    = require('./routes/users');
+const rsvpRoutes    = require('./routes/rsvps');
+const searchRoutes  = require('./routes/search');
+const paymentRoutes = require('./routes/payments');  // ← NEW
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5502;
 
 // ─── MIDDLEWARE ───────────────────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false }));
@@ -25,10 +26,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // ─── API ROUTES ──────────────────────────────────────────────
-app.use('/api/events', eventRoutes);
-app.use('/api/users',  userRoutes);
-app.use('/api/rsvps',  rsvpRoutes);
-app.use('/api/search', searchRoutes);
+app.use('/api/events',   eventRoutes);
+app.use('/api/users',    userRoutes);
+app.use('/api/rsvps',    rsvpRoutes);
+app.use('/api/search',   searchRoutes);
+app.use('/api/payments', paymentRoutes);  // ← NEW
 
 // ─── HEALTH CHECK ────────────────────────────────────────────
 app.get('/health', (_req, res) => {
@@ -59,7 +61,7 @@ async function start() {
 
   app.listen(PORT, () => {
     console.log(`\n✅  Commune is running!`);
-    console.log(`👉  Open your browser at: http://localhost:${3000}\n`);
+    console.log(`👉  Open your browser at: http://localhost:${PORT}\n`);
   });
 }
 
