@@ -2,45 +2,34 @@ const jwt = require('jsonwebtoken');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'commune_super_secret_change_in_prod';
 
-/**
- * authenticate — verifies JWT token from Authorization header.
- * Attaches decoded user payload to req.user.
- */
+// ─── authenticate ─────────────────────────────────────────────
+// Verifies the Bearer token and attaches req.user
 function authenticate(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Authentication required' });
+  const authHeader = req.headers['authorization'] || '';
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Authentication required. Please sign in.' });
   }
 
-  const token = authHeader.split(' ')[1];
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    req.user = decoded; // { id, email, role }
+    req.user = jwt.verify(token, JWT_SECRET);
     next();
   } catch (err) {
-    return res.status(401).json({ error: 'Invalid or expired token' });
+    return res.status(401).json({ error: 'Invalid or expired token. Please sign in again.' });
   }
 }
 
-/**
- * authorizeOrganizer — allows organizers and admins only.
- * Must be used AFTER authenticate.
- */
+// ─── authorizeOrganizer ───────────────────────────────────────
+// Only allows users with role 'organizer' or 'admin'
 function authorizeOrganizer(req, res, next) {
-  if (!req.user || !['organizer', 'admin'].includes(req.user.role)) {
-    return res.status(403).json({ error: 'Organizer account required to manage events' });
+  if (!req.user) {
+    return res.status(401).json({ error: 'Authentication required.' });
+  }
+  if (req.user.role !== 'organizer' && req.user.role !== 'admin') {
+    return res.status(403).json({ error: 'Organizer account required to perform this action.' });
   }
   next();
 }
 
-/**
- * authorizeAdmin — allows admins only.
- */
-function authorizeAdmin(req, res, next) {
-  if (!req.user || req.user.role !== 'admin') {
-    return res.status(403).json({ error: 'Admin access required' });
-  }
-  next();
-}
-
-module.exports = { authenticate, authorizeOrganizer, authorizeAdmin };
+module.exports = { authenticate, authorizeOrganizer };
